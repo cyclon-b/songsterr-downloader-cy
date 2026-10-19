@@ -19,12 +19,12 @@ See [CONVERTER.md](src/lib/server/services/converter/CONVERTER.md) for full deta
 ## How to run
 
 1. Clone the repo
-2. Install [bun](https://bun.sh/)
-3. `bun install`
-4. `bun dev`
+2. Install [Node.js](https://nodejs.org/) 24.x (npm is included)
+3. `npm install`
+4. `npm run dev`
 
 ## Running tests
 
 ```
-bun run test:unit
+npm run test:unit -- --run
 ```

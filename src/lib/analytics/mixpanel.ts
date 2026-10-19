@@ -1,13 +1,47 @@
-import mixpanel from 'mixpanel-browser';
+import { browser } from '$app/environment';
 import { env } from '$env/dynamic/public';
 
-const MIXPANEL_ID = env.PUBLIC_MIXPANEL_ID;
+/*
+ * mixpanel-browser is loaded lazily and must never be allowed to break the
+ * app: an extension, firewall or antivirus can block the module request, and a
+ * rejected static import would take the whole client bundle (and therefore
+ * hydration and downloads) down with it.
+ */
+type MixpanelClient = {
+  init: (token: string, options?: Record<string, unknown>) => void;
+  track: (eventName: string, properties?: Record<string, any>) => void;
+};
 
-if (MIXPANEL_ID) {
-  mixpanel.init(MIXPANEL_ID, {
-    autocapture: false,
-    record_sessions_percent: 0
-  });
+let clientPromise: Promise<MixpanelClient | null> | undefined;
+
+function getClient(): Promise<MixpanelClient | null> {
+  if (!browser) return Promise.resolve(null);
+
+  clientPromise ??= import('mixpanel-browser')
+    .then(({ default: mixpanel }) => {
+      const token = env.PUBLIC_MIXPANEL_ID;
+      if (!token) return null;
+
+      mixpanel.init(token, {
+        autocapture: false,
+        record_sessions_percent: 0
+      });
+
+      return mixpanel;
+    })
+    .catch((error) => {
+      console.warn(
+        '[analytics] Mixpanel unavailable, continuing without analytics.',
+        error
+      );
+      return null;
+    });
+
+  return clientPromise;
+}
+
+function track(eventName: string, properties?: Record<string, any>): void {
+  void getClient().then((mixpanel) => mixpanel?.track(eventName, properties));
 }
 
 interface TrackDownloadParams {
@@ -17,11 +51,11 @@ interface TrackDownloadParams {
 }
 
 export function trackGuitarProDownloaded(props: TrackDownloadParams) {
-  mixpanel.track('Guitar Pro Downloaded', props);
+  track('Guitar Pro Downloaded', props);
 }
 
 export function trackMidiDownloaded(props: TrackDownloadParams) {
-  mixpanel.track('MIDI Downloaded', props);
+  track('MIDI Downloaded', props);
 }
 
 interface TrackDownloadFailedParams extends TrackDownloadParams {
@@ -31,13 +65,13 @@ interface TrackDownloadFailedParams extends TrackDownloadParams {
 }
 
 export function trackDownloadFailed(props: TrackDownloadFailedParams) {
-  mixpanel.track('Download Failed', props);
+  track('Download Failed', props);
 }
 
 export function trackYouTubeVideoClicked() {
-  mixpanel.track('YouTube Video Clicked');
+  track('YouTube Video Clicked');
 }
 
 export function trackFretwiseAdClicked() {
-  mixpanel.track('Fretwise Ad Clicked');
+  track('Fretwise Ad Clicked');
 }

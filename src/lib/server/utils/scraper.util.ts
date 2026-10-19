@@ -13,7 +13,18 @@ class Scraper {
     }
 
     const text = await response.text();
-    return new DOMParser().parseFromString(text, `text/${websiteType}`);
+    /*
+     * Songsterr serves HTML, but xmldom is an XML parser. Its diagnostics about
+     * HTML-only syntax (for example a bare `async` attribute) are expected and
+     * benign; the caller validates that the required payload was parsed.
+     */
+    return new DOMParser({
+      errorHandler: {
+        warning: () => {},
+        error: () => {},
+        fatalError: () => {}
+      }
+    }).parseFromString(text, `text/${websiteType}`);
   }
 }
 
