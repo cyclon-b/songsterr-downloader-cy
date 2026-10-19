@@ -1,5 +1,5 @@
 export const SONGSTERR_URL_REGEX_PATTERN =
-  /^https:\/\/www\.songsterr\.com\/a\/wsa\/.*/;
+  /^https?:\/\/(?:www\.)?songsterr\.com\/a\/wsa\/.*/;
 
 export function setValidationMessage(event: Event): void {
   const input = event.target as HTMLInputElement;
@@ -8,14 +8,13 @@ export function setValidationMessage(event: Event): void {
   } else {
     input.setCustomValidity('Please enter a valid Songsterr URL.');
   }
-
-  input.reportValidity();
 }
+
 export function clearValidationMessage(event: Event): void {
   const input = event.target as HTMLInputElement;
   input.setCustomValidity('');
 }
 
-export function isUrlFromSongsterr(url: any) {
-  return SONGSTERR_URL_REGEX_PATTERN.test(String(url));
+export function isUrlFromSongsterr(url: unknown): boolean {
+  return SONGSTERR_URL_REGEX_PATTERN.test(String(url ?? '').trim());
 }
